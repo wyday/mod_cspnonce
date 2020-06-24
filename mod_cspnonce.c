@@ -18,6 +18,8 @@
   * mod_cspnonce.c: Generate a cryptographically secure base64 encoded CSP nonce.
   *
   * Original author: wyDay, LLC <support@wyday.com>
+  *
+  * https://github.com/wyattoday/mod_cspnonce
   */
 
 #include "apr_general.h"    /* for apr_generate_random_bytes */
@@ -32,7 +34,11 @@ typedef unsigned char byte;
 
 const char* GenSecureCSPNonce(const request_rec* r)
 {
-    // generate 16 random bytes
+    // Generate 9 random bytes. Any multiple of 3 will work
+    // well because the base64 string generated will not require
+    // padding (i.e. useless characters).
+    // If you modify this number you'll need to modify the string length
+    // and null terminator below.
     byte random_bytes[9];
 
     apr_generate_random_bytes(random_bytes, sizeof(random_bytes));
