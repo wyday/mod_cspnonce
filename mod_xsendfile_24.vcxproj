@@ -70,6 +70,8 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <TargetName>mod_cspnonce</TargetName>
+    <IncludePath>$(ProjectDir)..\apache24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\apache24\x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectName)_$(Configuration)_$(Platform)\</OutDir>
@@ -77,13 +79,15 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <TargetName>mod_cspnonce</TargetName>
+    <IncludePath>$(ProjectDir)..\apache24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\apache24\x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectName)_$(Configuration)_$(Platform)\</OutDir>
     <IntDir>$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Programs\Apache24\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Programs\Apache24\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..\apache24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\apache24\x64\lib;$(LibraryPath)</LibraryPath>
     <TargetName>mod_cspnonce</TargetName>
     <TargetExt>.so</TargetExt>
   </PropertyGroup>
@@ -93,6 +97,8 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <TargetName>mod_cspnonce</TargetName>
+    <IncludePath>$(ProjectDir)..\apache24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\apache24\x64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -104,12 +110,12 @@
       <HeaderFileName />
     </Midl>
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(SolutionDir)/include;$(SolutionDir)/srclib/apr/include;$(SolutionDir)/srclib/apr-util/include;$(SolutionDir)/srclib/zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -123,7 +129,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>$(OutDir)mod_xsendfile.so</OutputFile>
+      <OutputFile>$(OutDir)mod_cspnonce.so</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -132,6 +138,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>apr-1.lib;aprutil-1.lib;libapr-1.lib;libapriconv-1.lib;libaprutil-1.lib;libhttpd.lib;mod_dav.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -161,12 +168,13 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>$(OutDir)mod_xsendfile.so</OutputFile>
+      <OutputFile>$(OutDir)mod_cspnonce.so</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
+      <AdditionalDependencies>apr-1.lib;aprutil-1.lib;libapr-1.lib;libapriconv-1.lib;libaprutil-1.lib;libhttpd.lib;mod_dav.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -182,12 +190,12 @@
       <HeaderFileName />
     </Midl>
     <ClCompile>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>$(SolutionDir)/include;$(SolutionDir)/srclib/apr/include;$(SolutionDir)/srclib/apr-util/include;$(SolutionDir)/srclib/zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -240,13 +248,14 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>$(OutDir)mod_xsendfile.so</OutputFile>
+      <OutputFile>$(OutDir)mod_cspnonce.so</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>apr-1.lib;aprutil-1.lib;libapr-1.lib;libapriconv-1.lib;libaprutil-1.lib;libhttpd.lib;mod_dav.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

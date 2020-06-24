@@ -1,6 +1,8 @@
 # mod_cspnonce
 
-"mod_cspnonce" is an Apache2 module that makes it dead simple to add "nonce" values to the CSP (content security policy) headers.
+"mod_cspnonce" is an Apache2 module that makes it dead simple to add "nonce" values to the [CSP (`Content-Security-Policy`) headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy).
+
+`nonce` values are a great way to enable CSP headers while still having dynamic scripts and styles in your web app. Here's an [example from MDN web docs showing a use of `nonce` with `script-src` CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src).
 
 ## Example
 
@@ -26,6 +28,15 @@ $csp_nonce = $_SERVER['CSP_NONCE'];
 
 ?>
 ```
+
+Or, a more realistic example:
+
+```
+<script nonce="<?= $_SERVER['CSP_NONCE'] ?>">
+  var inline = 1;
+</script>
+```
+
 
 ## Why not use `mod_unique_id`?
 
