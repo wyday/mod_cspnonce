@@ -1,6 +1,6 @@
 1 VERSIONINFO
-FILEVERSION 1, 0, 0, 0
-PRODUCTVERSION 1, 0, 0, 0
+FILEVERSION 1, 1, 0, 0
+PRODUCTVERSION 1, 1, 0, 0
 FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 FILEFLAGS 0x1L
@@ -17,12 +17,12 @@ BLOCK "040904b0"
 BEGIN
 VALUE "CompanyName", "wyDay, LLC"
 VALUE "FileDescription", "cspnonce_module for Apache"
-VALUE "FileVersion", "1.0"
+VALUE "FileVersion", "1.1"
 VALUE "InternalName", "mod_cspnonce.so"
 VALUE "LegalCopyright", "Copyright 2005-2020 wyDay, LLC"
 VALUE "OriginalFilename", "mod_cspnonce.so"
 VALUE "ProductName", "Apache HTTP Server"
-VALUE "ProductVersion", "1.0"
+VALUE "ProductVersion", "1.1"
 END
 END
 END
