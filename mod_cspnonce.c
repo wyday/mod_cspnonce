@@ -22,13 +22,23 @@
   * https://github.com/wyattoday/mod_cspnonce
   */
 
-#include "apr_general.h"    /* for apr_generate_random_bytes */
 #include "apr_base64.h"
 
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"  /* for ap_hook_post_read_request */
 
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <bcrypt.h>
+#include <stdio.h> 
+
+#pragma comment(lib, "Bcrypt")
+#else
+#include <stdlib.h>
+#include <time.h>
+#endif
 
 typedef unsigned char byte;
 
@@ -41,7 +51,53 @@ const char* GenSecureCSPNonce(const request_rec* r)
     // and null terminator below.
     byte random_bytes[9];
 
-    apr_generate_random_bytes(random_bytes, sizeof(random_bytes));
+#ifdef _WIN32
+    BCRYPT_ALG_HANDLE Prov;
+
+    if (!BCRYPT_SUCCESS(
+        BCryptOpenAlgorithmProvider(&Prov, BCRYPT_RNG_ALGORITHM,
+            NULL, 0))) {
+        /* handle error */
+    }
+
+    if (!BCRYPT_SUCCESS(BCryptGenRandom(Prov, (PUCHAR)(random_bytes),
+        sizeof(random_bytes), 0))) {
+        /* handle error */
+    }
+
+    BCryptCloseAlgorithmProvider(Prov, 0);
+
+#else // POSIX
+
+    // This assumes that posix uses a secure PRNG
+    // on the system. This may or may not be true
+    // depending on the system. With modern kernels this
+    // will be true.
+    // https://man7.org/linux/man-pages/man3/random.3.html
+    int r;
+
+    struct timespec ts;
+    if (timespec_get(&ts, TIME_UTC) == 0) {
+        /* Handle error */
+    }
+
+    // Seed the PRNG
+    srandom(ts.tv_nsec ^ ts.tv_sec);
+
+    // Generate a random integer
+    // fill up bytes 0,1,2,3
+    r = random();
+    memcpy(random_bytes, &r, 4);
+
+    // fill up bytes 4,5,6,7
+    r = random();
+    memcpy(random_bytes + 4, &r, 4);
+
+    // fill up bytes 5,6,7,8
+    // Yes, there's overlap.
+    r = random();
+    memcpy(random_bytes + 5, &r, 4);
+#endif
 
     char* cspNonce;
 
