@@ -1,0 +1,70 @@
+# Using clang format 8.0
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+# Becuase you have to start somewhere.
+BasedOnStyle: LLVM
+
+# Basic settings
+ColumnLimit: 0
+ContinuationIndentWidth: 4
+IndentWidth: 4
+UseTab: Never
+Language: Cpp
+Standard: Cpp11
+
+# Code layout
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 2
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterNamespace: false
+    AfterCaseLabel: true
+    AfterClass: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterControlStatement: true
+    BeforeCatch: true
+    BeforeElse: true
+PointerAlignment: Middle
+
+IndentCaseLabels: true
+MaxEmptyLinesToKeep: 2
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+
+CompactNamespaces: false
+
+SpaceAfterTemplateKeyword: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpacesInAngles: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInContainerLiterals: true
+SpacesInSquareBrackets: false
+
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlines: DontAlign
+AlignOperands: true
+AccessModifierOffset: -4
+AllowShortCaseLabelsOnASingleLine: false
+FixNamespaceComments: true
+
+IndentPPDirectives: AfterHash
+
+
+# Don't let clang-format touch the order of includes. This breaks shit.
+SortIncludes: false
+
+BinPackArguments: false
+BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
