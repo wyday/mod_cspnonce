@@ -40,4 +40,4 @@ Or, a more realistic example:
 
 ## Why not use `mod_unique_id`?
 
-Becase that module doesn't create base64 values (`@` symbols are not valid), plus it's overly bloated and uses 90's era random number generation (i.e. it's not random at all -- it's just a bunch of numbers smushed together).
+Because `mod_unique_id` doesn't create base64 values (`@` symbols are not valid), plus it's overly bloated and uses 90's era random number generation (i.e. it's not random at all -- it's just a bunch of numbers smushed together).
