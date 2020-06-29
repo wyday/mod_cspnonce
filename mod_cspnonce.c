@@ -37,7 +37,9 @@
 #    pragma comment(lib, "Bcrypt")
 #else
 #    include <stdlib.h>
-#    include <time.h>
+#    ifndef __APPLE__
+#        include <time.h>
+#    endif
 #endif
 
 typedef unsigned char byte;
@@ -80,28 +82,32 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // depending on the system. With modern kernels this
     // will be true.
     // https://man7.org/linux/man-pages/man3/random.3.html
-    int r;
+    int h;
 
+// Seed the PRNG
+#    ifdef __APPLE__
+    srandomdev();
+#    else
     struct timespec ts;
     if (timespec_get(&ts, TIME_UTC) == 0)
         return NULL;
 
-    // Seed the PRNG
     srandom(ts.tv_nsec ^ ts.tv_sec);
+#    endif
 
     // Generate a random integer
     // fill up bytes 0,1,2,3
-    r = random();
-    memcpy(random_bytes, &r, 4);
+    h = random();
+    memcpy(random_bytes, &h, 4);
 
     // fill up bytes 4,5,6,7
-    r = random();
-    memcpy(random_bytes + 4, &r, 4);
+    h = random();
+    memcpy(random_bytes + 4, &h, 4);
 
     // fill up bytes 5,6,7,8
     // Yes, there's overlap.
-    r = random();
-    memcpy(random_bytes + 5, &r, 4);
+    h = random();
+    memcpy(random_bytes + 5, &h, 4);
 #endif
 
     char * cspNonce;
