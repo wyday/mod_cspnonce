@@ -41,3 +41,27 @@ Or, a more realistic example:
 ## Why not use `mod_unique_id`?
 
 Because `mod_unique_id` doesn't create base64 values (`@` symbols are not valid), plus it's overly bloated and uses 90's era random number generation (i.e. it's not random at all -- it's just a bunch of numbers smushed together).
+
+
+
+## Building `mod_cspnonce`
+
+On **Windows** you can use our pre-built binaries (see the Release tab on this github repository). Or you can load the .sln file in the latest Visual Studio and build it (note: the Apache headers and linker libraries need to be relative to wherever you clone this repository to -- see the library and header paths in the project file for exact details).
+
+On **Unix (macOS, Linux, etc.)** you can use [the `apxs` utility provided with Apache](https://httpd.apache.org/docs/2.4/programs/apxs.html). The first step is typically installing the "development tools" for Apache Server. So, on Debian/Ubuntu, that might look like this:
+
+```
+sudo apt install apache2-dev
+```
+
+And on RedHat/CentOS that might look like this:
+
+```
+sudo yum install httpd-devel
+```
+
+Then, to compile & install the module, run `apxs` like so (note, you'll need to modify the path to wherever you cloned this repository to):
+
+```
+apxs -ci /your/path/to/mod_cspnonce.c
+```
