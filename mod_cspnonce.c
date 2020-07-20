@@ -52,12 +52,19 @@ typedef unsigned char byte;
 */
 const char * GenSecureCSPNonce(const request_rec * r)
 {
-    // Generate 9 random bytes. Any multiple of 3 will work
+    // Generate 18 random bytes (144-bits). Any multiple of 3 will work
     // well because the base64 string generated will not require
     // padding (i.e. useless characters).
     // If you modify this number you'll need to modify the string length
     // and null terminator below.
-    byte random_bytes[9];
+    byte random_bytes[18];
+
+    // This number is based on the seemlingly made-up number used in
+    // the W3C "webappsec-csp" document. It seems made-up (i.e. a number
+    // not based on either theoretical or real-world testing) because
+    // 128-bits cannot be divided evenly into a base64-encoded string.
+    // But, whatever, I'll let someone else fight that battle.
+    // Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
 
 #ifdef _WIN32
     BCRYPT_ALG_HANDLE Prov;
@@ -104,21 +111,30 @@ const char * GenSecureCSPNonce(const request_rec * r)
     h = random();
     memcpy(random_bytes + 4, &h, 4);
 
-    // fill up bytes 5,6,7,8
+    // fill up bytes 8,9,10,11
+    h = random();
+    memcpy(random_bytes + 8, &h, 4);
+
+    // fill up bytes 12,13,14,15
+    h = random();
+    memcpy(random_bytes + 12, &h, 4);
+
+    // fill up bytes 14,15,16,17
     // Yes, there's overlap.
     h = random();
-    memcpy(random_bytes + 5, &h, 4);
+    memcpy(random_bytes + 14, &h, 4);
+
 #endif
 
     char * cspNonce;
 
-    // Allocate 13 bytes for the base64 string + NULL.
+    // Allocate 25 bytes for the base64 string + NULL.
     // Base64 uses 4 ascii characters to encode 24-bits (3 bytes) of data
-    // Thus we need 12 characters + 1 NULL char to store 9 bytes of random data.
-    cspNonce = (char *)apr_palloc(r->pool, 13);
+    // Thus we need 24 characters + 1 NULL char to store 18 bytes of random data.
+    cspNonce = (char *)apr_palloc(r->pool, 25);
 
     // null terminate string
-    cspNonce[12] = '\0';
+    cspNonce[24] = '\0';
 
     apr_base64_encode(cspNonce, (const char *)random_bytes, sizeof(random_bytes));
 
