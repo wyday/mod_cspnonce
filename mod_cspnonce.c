@@ -19,7 +19,7 @@
  *
  * Original author: wyDay, LLC <support@wyday.com>
  *
- * https://github.com/wyattoday/mod_cspnonce
+ * https://github.com/wyday/mod_cspnonce
 */
 
 #include "apr_base64.h"
