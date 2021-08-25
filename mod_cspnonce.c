@@ -166,6 +166,7 @@ static void register_hooks(apr_pool_t * p)
     ap_hook_post_read_request(set_cspnonce, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
+#ifdef AP_DECLARE_MODULE
 AP_DECLARE_MODULE(cspnonce) = {
     STANDARD20_MODULE_STUFF,
     NULL,          /* dir config creater */
@@ -175,3 +176,14 @@ AP_DECLARE_MODULE(cspnonce) = {
     NULL,          /* command apr_table_t */
     register_hooks /* register hooks */
 };
+#else
+module AP_MODULE_DECLARE_DATA cspnonce_module = {
+    STANDARD20_MODULE_STUFF,
+    NULL,          /* dir config creater */
+    NULL,          /* dir merger --- default is to override */
+    NULL,          /* server config */
+    NULL,          /* merge server configs */
+    NULL,          /* command apr_table_t */
+    register_hooks /* register hooks */
+};
+#endif
