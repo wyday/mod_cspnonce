@@ -23,11 +23,29 @@
 */
 
 #include "apr_base64.h"
+#include "apr_random.h"
 
 #include "httpd.h"
+#include "http_log.h"
 #include "http_config.h"
 #include "http_protocol.h" /* for ap_hook_post_read_request */
 
+// Generate 18 random bytes (144-bits). Any multiple of 3 will work
+// well because the base64 string generated will not require
+// padding (i.e. useless characters).
+// If you modify this number you'll need to modify the string length
+// and null terminator below.
+
+// This number is based on the seemlingly made-up number used in
+// the W3C "webappsec-csp" document. It seems made-up (i.e. a number
+// not based on either theoretical or real-world testing) because
+// 128-bits cannot be divided evenly into a base64-encoded string.
+// But, whatever, I'll let someone else fight that battle.
+// Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
+
+#ifndef CSPNONCE_RANDOM_LEN 
+#define CSPNONCE_RANDOM_LEN (18)
+#endif
 
 #ifdef _WIN32
 #    include <Windows.h>
@@ -44,6 +62,12 @@
 
 typedef unsigned char byte;
 
+typedef struct {
+    apr_random_t * rnd_state;
+} csp_config;
+
+module cspnonce;
+
 /*
 * Generates a 12-character string (13 bytes to account for null).
 * It's random and base64 encoded.
@@ -52,91 +76,23 @@ typedef unsigned char byte;
 */
 const char * GenSecureCSPNonce(const request_rec * r)
 {
-    // Generate 18 random bytes (144-bits). Any multiple of 3 will work
-    // well because the base64 string generated will not require
-    // padding (i.e. useless characters).
-    // If you modify this number you'll need to modify the string length
-    // and null terminator below.
-    byte random_bytes[18];
+    csp_config * cfg = ap_get_module_config(r->server->module_config, &cspnonce);
+    byte random_bytes[CSPNONCE_RANDOM_LEN];
 
-    // This number is based on the seemlingly made-up number used in
-    // the W3C "webappsec-csp" document. It seems made-up (i.e. a number
-    // not based on either theoretical or real-world testing) because
-    // 128-bits cannot be divided evenly into a base64-encoded string.
-    // But, whatever, I'll let someone else fight that battle.
-    // Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
-
-#ifdef _WIN32
-    BCRYPT_ALG_HANDLE Prov;
-
-    if (!BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&Prov, BCRYPT_RNG_ALGORITHM, NULL, 0)))
-    {
-        return NULL;
+    apr_status_t status;
+    if ((status = apr_random_secure_bytes(cfg->rnd_state, random_bytes, CSPNONCE_RANDOM_LEN)) != APR_SUCCESS) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, "mod_csp: generation failed");
+	return NULL;
     }
-
-    if (!BCRYPT_SUCCESS(BCryptGenRandom(Prov, (PUCHAR)(random_bytes), sizeof(random_bytes), 0)))
-    {
-        BCryptCloseAlgorithmProvider(Prov, 0);
-        return NULL;
-    }
-
-    BCryptCloseAlgorithmProvider(Prov, 0);
-
-#else  // POSIX
-
-    // This assumes that posix uses a secure PRNG
-    // on the system. This may or may not be true
-    // depending on the system. With modern kernels this
-    // will be true.
-    // https://man7.org/linux/man-pages/man3/random.3.html
-    int h;
-
-// Seed the PRNG
-#    ifdef __APPLE__
-    srandomdev();
-#    else
-    struct timespec ts;
-    if (timespec_get(&ts, TIME_UTC) == 0)
-        return NULL;
-
-    srandom(ts.tv_nsec ^ ts.tv_sec);
-#    endif
-
-    // Generate a random integer
-    // fill up bytes 0,1,2,3
-    h = random();
-    memcpy(random_bytes, &h, 4);
-
-    // fill up bytes 4,5,6,7
-    h = random();
-    memcpy(random_bytes + 4, &h, 4);
-
-    // fill up bytes 8,9,10,11
-    h = random();
-    memcpy(random_bytes + 8, &h, 4);
-
-    // fill up bytes 12,13,14,15
-    h = random();
-    memcpy(random_bytes + 12, &h, 4);
-
-    // fill up bytes 14,15,16,17
-    // Yes, there's overlap.
-    h = random();
-    memcpy(random_bytes + 14, &h, 4);
-
-#endif
 
     char * cspNonce;
-
-    // Allocate 25 bytes for the base64 string + NULL.
-    // Base64 uses 4 ascii characters to encode 24-bits (3 bytes) of data
-    // Thus we need 24 characters + 1 NULL char to store 18 bytes of random data.
-    cspNonce = (char *)apr_palloc(r->pool, 25);
+    // Avoid the use of sizeof; to not get 'rounded up' by a compiler.
+    cspNonce = (char *)apr_palloc(r->pool, apr_base64_encode_len(CSPNONCE_RANDOM_LEN));
 
     // null terminate string
     cspNonce[24] = '\0';
 
-    apr_base64_encode(cspNonce, (const char *)random_bytes, sizeof(random_bytes));
+    apr_base64_encode(cspNonce, (const char *)random_bytes, CSPNONCE_RANDOM_LEN);
 
     return cspNonce;
 }
@@ -161,17 +117,29 @@ static int set_cspnonce(request_rec * r)
     return DECLINED;
 }
 
+static void * create_srv_config(apr_pool_t *p, server_rec *s) {
+     return apr_pcalloc(p, sizeof(csp_config));
+}
+
+static void init_rnd(apr_pool_t *p, server_rec *s) {
+    csp_config * cfg = (csp_config *)ap_get_module_config(s->module_config, &cspnonce);
+    if (NULL == (cfg->rnd_state = apr_random_standard_new(p))) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "mod_csp: random generator init failed - INSECURE");
+    }
+}
+
 static void register_hooks(apr_pool_t * p)
 {
     ap_hook_post_read_request(set_cspnonce, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_child_init(init_rnd, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 AP_DECLARE_MODULE(cspnonce) = {
     STANDARD20_MODULE_STUFF,
-    NULL,          /* dir config creater */
-    NULL,          /* dir merger --- default is to override */
-    NULL,          /* server config */
-    NULL,          /* merge server configs */
-    NULL,          /* command apr_table_t */
-    register_hooks /* register hooks */
+    NULL,             /* dir config creater */
+    NULL,             /* dir merger --- default is to override */
+    create_srv_config,/* server config */
+    NULL,             /* merge server configs */
+    NULL,             /* command apr_table_t */
+    register_hooks    /* register hooks */
 };
