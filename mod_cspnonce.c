@@ -64,20 +64,23 @@ module cspnonce;
 const char * GenSecureCSPNonce(const request_rec * r)
 {
     csp_config * cfg = ap_get_module_config(r->server->module_config, &cspnonce);
+    apr_random_t * rnd_state = cfg->rnd_state;
     byte random_bytes[CSPNONCE_RANDOM_LEN];
-
     apr_status_t status;
+    char * cspNonce;
+
+    if (!rnd_state) {
+        ap_log_rerror(APLOG_MARK, APLOG_CRIT, status, r, "mod_csp: rnd generator not configured.");
+	return NULL;
+    }
+
     if ((status = apr_random_secure_bytes(cfg->rnd_state, random_bytes, CSPNONCE_RANDOM_LEN)) != APR_SUCCESS) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, "mod_csp: generation failed");
 	return NULL;
     }
 
-    char * cspNonce;
     // Avoid the use of sizeof; to not get 'rounded up' by a compiler.
     cspNonce = (char *)apr_palloc(r->pool, apr_base64_encode_len(CSPNONCE_RANDOM_LEN));
-
-    // null terminate string
-    cspNonce[24] = '\0';
 
     apr_base64_encode(cspNonce, (const char *)random_bytes, CSPNONCE_RANDOM_LEN);
 
@@ -113,6 +116,8 @@ static void * create_srv_config(apr_pool_t *p, server_rec *s) {
 static void init_rnd(apr_pool_t *p, server_rec *s) {
     csp_config * cfg = (csp_config *)ap_get_module_config(s->module_config, &cspnonce);
     if (NULL == (cfg->rnd_state = apr_random_standard_new(p))) {
+	// Note - we cannot pass an error up here - so we rely on GenSecureCSPNonce to spot the NULL
+   	// pointer.
         ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "mod_csp: random generator init failed - INSECURE");
     }
 }
