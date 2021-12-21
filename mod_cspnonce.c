@@ -47,19 +47,6 @@
 #define CSPNONCE_RANDOM_LEN (18)
 #endif
 
-#ifdef _WIN32
-#    include <Windows.h>
-#    include <bcrypt.h>
-#    include <stdio.h>
-
-#    pragma comment(lib, "Bcrypt")
-#else
-#    include <stdlib.h>
-#    ifndef __APPLE__
-#        include <time.h>
-#    endif
-#endif
-
 typedef unsigned char byte;
 
 typedef struct {
@@ -110,9 +97,11 @@ static int set_cspnonce(request_rec * r)
     if (id == NULL)
         id = GenSecureCSPNonce(r);
 
+    if (id == NULL)
+        return HTTP_INTERNAL_SERVER_ERROR;
+
     /* set the environment variable */
-    if (id != NULL)
-        apr_table_setn(r->subprocess_env, "CSP_NONCE", id);
+    apr_table_setn(r->subprocess_env, "CSP_NONCE", id);
 
     return DECLINED;
 }
