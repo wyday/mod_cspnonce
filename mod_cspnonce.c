@@ -20,7 +20,7 @@
  * Original author: wyDay, LLC <support@wyday.com>
  *
  * https://github.com/wyday/mod_cspnonce
-*/
+ */
 
 #include "apr_base64.h"
 
@@ -37,19 +37,51 @@
 #    pragma comment(lib, "Bcrypt")
 #else
 #    include <stdlib.h>
-#    ifndef __APPLE__
-#        include <time.h>
+#    if defined(__linux__)
+#        define _GNU_SOURCE 1
+#        include <sys/types.h>
+#        include <unistd.h>
+#    elif defined(__OpenBSD__) || defined(__FreeBSD__)
+#        include <unistd.h>
 #    endif
 #endif
+
+#if defined __GLIBC__ && defined __linux__
+
+#    if __GLIBC__ > 2 || __GLIBC_MINOR__ > 24
+#        include <sys/random.h>
+
+int my_getentropy(void * buf, size_t buflen)
+{
+    return getentropy(buf, buflen);
+}
+
+#    else /* older glibc */
+#        include <sys/syscall.h>
+#        include <errno.h>
+
+int my_getentropy(void * buf, size_t buflen)
+{
+    if (buflen > 256)
+    {
+        errno = EIO;
+        return -1;
+    }
+    return syscall(SYS_getrandom, buf, buflen, 0);
+}
+
+#    endif
+#endif
+
 
 typedef unsigned char byte;
 
 /*
-* Generates a 12-character string (13 bytes to account for null).
-* It's random and base64 encoded.
-*
-* On error NULL is returned.
-*/
+ * Generates a 12-character string (13 bytes to account for null).
+ * It's random and base64 encoded.
+ *
+ * On error NULL is returned.
+ */
 const char * GenSecureCSPNonce(const request_rec * r)
 {
     // Generate 18 random bytes (144-bits). Any multiple of 3 will work
@@ -82,8 +114,17 @@ const char * GenSecureCSPNonce(const request_rec * r)
 
     BCryptCloseAlgorithmProvider(Prov, 0);
 
-#else  // POSIX
+#elif defined(__linux__)
 
+    if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
+        return NULL;
+
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
+
+    if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
+        return NULL;
+
+#elif defined(__APPLE__)
     // This assumes that posix uses a secure PRNG
     // on the system. This may or may not be true
     // depending on the system. With modern kernels this
@@ -91,16 +132,8 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // https://man7.org/linux/man-pages/man3/random.3.html
     int h;
 
-// Seed the PRNG
-#    ifdef __APPLE__
+    // Seed the PRNG
     srandomdev();
-#    else
-    struct timespec ts;
-    if (timespec_get(&ts, TIME_UTC) == 0)
-        return NULL;
-
-    srandom(ts.tv_nsec ^ ts.tv_sec);
-#    endif
 
     // Generate a random integer
     // fill up bytes 0,1,2,3
@@ -123,7 +156,8 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // Yes, there's overlap.
     h = random();
     memcpy(random_bytes + 14, &h, 4);
-
+#else  // random unix OS
+#    error Make a PR here to support this OS: https://github.com/wyday/mod_cspnonce
 #endif
 
     char * cspNonce;
@@ -154,9 +188,12 @@ static int set_cspnonce(request_rec * r)
     if (id == NULL)
         id = GenSecureCSPNonce(r);
 
+    // hard failure when we can't generate a NONCE.
+    if (id == NULL)
+        return HTTP_INTERNAL_SERVER_ERROR;
+
     /* set the environment variable */
-    if (id != NULL)
-        apr_table_setn(r->subprocess_env, "CSP_NONCE", id);
+    apr_table_setn(r->subprocess_env, "CSP_NONCE", id);
 
     return DECLINED;
 }
