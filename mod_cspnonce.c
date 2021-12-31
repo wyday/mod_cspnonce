@@ -37,7 +37,10 @@
 #    pragma comment(lib, "Bcrypt")
 #else
 #    include <stdlib.h>
-#    if defined(__linux__)
+
+#    if defined(__APPLE__)
+#        include <sys/random.h>
+#    elif defined(__linux__)
 #        define _GNU_SOURCE 1
 #        include <sys/types.h>
 #        include <unistd.h>
@@ -51,7 +54,7 @@
 #    if __GLIBC__ > 2 || __GLIBC_MINOR__ > 24
 #        include <sys/random.h>
 
-int my_getentropy(void * buf, size_t buflen)
+inline int my_getentropy(void * buf, size_t buflen)
 {
     return getentropy(buf, buflen);
 }
@@ -119,43 +122,11 @@ const char * GenSecureCSPNonce(const request_rec * r)
     if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
-#elif defined(__OpenBSD__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 
     if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
-#elif defined(__APPLE__)
-    // This assumes that posix uses a secure PRNG
-    // on the system. This may or may not be true
-    // depending on the system. With modern kernels this
-    // will be true.
-    // https://man7.org/linux/man-pages/man3/random.3.html
-    int h;
-
-    // Seed the PRNG
-    srandomdev();
-
-    // Generate a random integer
-    // fill up bytes 0,1,2,3
-    h = random();
-    memcpy(random_bytes, &h, 4);
-
-    // fill up bytes 4,5,6,7
-    h = random();
-    memcpy(random_bytes + 4, &h, 4);
-
-    // fill up bytes 8,9,10,11
-    h = random();
-    memcpy(random_bytes + 8, &h, 4);
-
-    // fill up bytes 12,13,14,15
-    h = random();
-    memcpy(random_bytes + 12, &h, 4);
-
-    // fill up bytes 14,15,16,17
-    // Yes, there's overlap.
-    h = random();
-    memcpy(random_bytes + 14, &h, 4);
 #else  // random unix OS
 #    error Make a PR here to support this OS: https://github.com/wyday/mod_cspnonce
 #endif
