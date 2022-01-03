@@ -65,3 +65,19 @@ Then, to compile & install the module, run `apxs` like so (note, you'll need to 
 ```
 apxs -ci /your/path/to/mod_cspnonce.c
 ```
+
+## Get error 500 in Apache?
+
+**Upgrade your kernel.**
+
+- macOS: upgrade to 10.12 or newer.
+- FreeBSD: upgrade to 12.0 or newer.
+- OpenBSD: upgrade to 5.6 or newer.
+- Linux: upgrade to kernel 3.17 or newer (released in 2014).
+
+As I write this, none of these versions is new. Do the internet (and yourself) a favor and update your system. This is a security library, after all. We're not going to bend over backwards to support insecure kernel and OS versions.
+
+No, we won't write anything to "fix" this (upgrade!).
+No, we won't accept a PR to "fix" this (upgrade!).
+
+This isn't our problem, it's your problem.
