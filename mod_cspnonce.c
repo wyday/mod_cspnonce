@@ -39,7 +39,7 @@
 #    include <stdlib.h>
 
 #    if defined(__APPLE__)
-#        include <sys/random.h>
+#        include <CommonCrypto/CommonRandom.h>
 #    elif defined(__linux__)
 #        define _GNU_SOURCE 1
 #        include <sys/types.h>
@@ -122,7 +122,12 @@ const char * GenSecureCSPNonce(const request_rec * r)
     if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
-#elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#elif defined(__APPLE__)
+
+    if (CCRandomGenerateBytes(random_bytes, sizeof(random_bytes)) != kCCSuccess)
+        return NULL;
+
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
 
     if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
