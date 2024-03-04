@@ -44,35 +44,9 @@
 #        define _GNU_SOURCE 1
 #        include <sys/types.h>
 #        include <unistd.h>
+#        include <sys/random.h>
 #    elif defined(__OpenBSD__) || defined(__FreeBSD__)
 #        include <unistd.h>
-#    endif
-#endif
-
-#if defined __GLIBC__ && defined __linux__
-
-#    if __GLIBC__ > 2 || __GLIBC_MINOR__ > 24
-#        include <sys/random.h>
-
-inline int my_getentropy(void * buf, size_t buflen)
-{
-    return getentropy(buf, buflen);
-}
-
-#    else /* older glibc */
-#        include <sys/syscall.h>
-#        include <errno.h>
-
-int my_getentropy(void * buf, size_t buflen)
-{
-    if (buflen > 256)
-    {
-        errno = EIO;
-        return -1;
-    }
-    return syscall(SYS_getrandom, buf, buflen, 0);
-}
-
 #    endif
 #endif
 
@@ -101,35 +75,14 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // But, whatever, I'll let someone else fight that battle.
     // Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
 
-#ifdef _WIN32
-    BCRYPT_ALG_HANDLE Prov;
+#if defined(__linux__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 
-    if (!BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&Prov, BCRYPT_RNG_ALGORITHM, NULL, 0)))
-    {
-        return NULL;
-    }
-
-    if (!BCRYPT_SUCCESS(BCryptGenRandom(Prov, (PUCHAR)(random_bytes), sizeof(random_bytes), 0)))
-    {
-        BCryptCloseAlgorithmProvider(Prov, 0);
-        return NULL;
-    }
-
-    BCryptCloseAlgorithmProvider(Prov, 0);
-
-#elif defined(__linux__)
-
-    if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
+    if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
 #elif defined(__APPLE__)
 
     if (CCRandomGenerateBytes(random_bytes, sizeof(random_bytes)) != kCCSuccess)
-        return NULL;
-
-#elif defined(__OpenBSD__) || defined(__FreeBSD__)
-
-    if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
 #else  // random unix OS
