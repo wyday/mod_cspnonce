@@ -85,6 +85,8 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // But, whatever, I'll let someone else fight that battle.
     // Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
 
+#if defined(__linux__)
+
     if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
