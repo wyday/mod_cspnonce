@@ -44,20 +44,10 @@
 #        define _GNU_SOURCE 1
 #        include <sys/types.h>
 #        include <unistd.h>
+#        include <sys/random.h>
 #    elif defined(__OpenBSD__) || defined(__FreeBSD__)
 #        include <unistd.h>
 #    endif
-#endif
-
-#if defined __linux__
-
-#include <sys/random.h>
-
-inline int my_getentropy(void * buf, size_t buflen)
-{
-    return getentropy(buf, buflen);
-}
-
 #endif
 
 
@@ -85,19 +75,14 @@ const char * GenSecureCSPNonce(const request_rec * r)
     // But, whatever, I'll let someone else fight that battle.
     // Here is the nonsense source: https://w3c.github.io/webappsec-csp/#security-nonces
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 
-    if (my_getentropy(random_bytes, sizeof(random_bytes)) == -1)
+    if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
 #elif defined(__APPLE__)
 
     if (CCRandomGenerateBytes(random_bytes, sizeof(random_bytes)) != kCCSuccess)
-        return NULL;
-
-#elif defined(__OpenBSD__) || defined(__FreeBSD__)
-
-    if (getentropy(random_bytes, sizeof(random_bytes)) == -1)
         return NULL;
 
 #else  // random unix OS
