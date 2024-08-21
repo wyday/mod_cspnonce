@@ -42,6 +42,9 @@ Or, a more realistic example:
 
 Because `mod_unique_id` doesn't create base64 values (`@` symbols are not valid), plus it's overly bloated and uses 90's era random number generation (i.e. it's not random at all -- it's just a bunch of numbers smushed together).
 
+Why is "a bunch of numbers smushed together" bad? Because it's predictable, guessable, and thus exploitable. I.e. it can be used to reliably inject rogue content into your websites (thus negating the whole purpose of CSPs in the first place).
+
+**So, don't use `mod_unique_id`.**
 
 
 ## Building `mod_cspnonce`
